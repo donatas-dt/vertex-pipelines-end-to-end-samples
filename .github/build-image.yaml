@@ -1,0 +1,38 @@
+name: Build Container Image
+
+on:
+  workflow_call:
+    inputs: 
+      LOCATION: string
+      PROJECT: string
+      TARGET: string
+      COMMIT_SHA: string
+    secrets:
+      ACCESS_TOKEN: string
+
+jobs:
+  build-push-container-image:
+    name: Build and Push Container Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 
+
+      - name: Login to Artifact Registry
+        uses: docker/login-action@v3.0.0
+        with:
+          registry: ${{ inputs.LOCATION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ secrets.ACCESS_TOKEN }}
+
+      - id: docker-push-tagged
+        name: Tag Docker image and push to GAR
+        uses: docker/build-push-action@v5.0.0
+        with:
+          context: .
+          push: true
+          target: ${{ inputs.TARGET }}
+          tags: |
+            ${{ inputs.LOCATION }}-docker.pkg.dev/${{ inputs.PROJECT }}/vertex-images/${{ inputs.TARGET }}:${{ inputs.COMMIT_SHA }}
+        working_directory: model/

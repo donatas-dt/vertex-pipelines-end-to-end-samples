@@ -1,0 +1,30 @@
+name: Build Container Image
+
+on:
+  pull_request:
+
+jobs:
+  build-push-container-image:
+    name: Build and Push Container Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 
+
+      - name: Authenticate to Google CLoud
+        uses: google-github-actions/auth@v1
+        id: auth
+        with:
+          service_account: gh-actions-dev@dt-donatas-sandbox-dev.iam.gserviceaccount.com
+          workload_identity_provider: projects/529423390811/locations/global/workloadIdentityPools/gh-ml-pool/providers/github-provider
+          token_format: access_token
+
+      - name: Build
+        uses: actions/build-image.yaml
+        with:
+          LOCATION: europe-west2
+          PROJECT: dt-donatas-sandbox-dev
+          TARGET: training
+          COMMIT_SHA: ${{ github.sha }}
+          ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
